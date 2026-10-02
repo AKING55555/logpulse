@@ -109,6 +109,54 @@ logpulse/
 
 ---
 
+## Local Development Environment
+
+LogPulse provides a complete local emulation environment using Docker Compose:
+
+### Services & Port Mappings
+
+To prevent collisions with existing host services, LogPulse maps to isolated host ports:
+
+| Service | Container Name | Host Port | Container Port | Data / Volume |
+| :--- | :--- | :--- | :--- | :--- |
+| **MySQL 8** | `logpulse-mysql` | `3307` | `3306` | `logpulse-mysql-data` |
+| **Redis 7** | `logpulse-redis` | `6380` | `6379` | Ephemeral / In-Memory |
+| **LocalStack** | `logpulse-localstack` | `4566` | `4566` | `logpulse-localstack-data` |
+
+*Safety Rule: All containers, volumes, and network names use the `logpulse-` prefix to ensure zero interference with other running workloads.*
+
+### Managing the Environment
+
+Using the `Makefile` or native commands:
+
+```bash
+# Start all services and auto-provision LocalStack resources
+make up
+# Or: docker compose up -d --wait && ./scripts/init-localstack.sh (or scripts/init-localstack.ps1)
+
+# Check service health
+make ps
+# Or: docker compose ps
+
+# View service logs
+make logs
+
+# Stop containers
+make down
+
+# Clean reset (destroys data volumes and re-provisions)
+make reset
+```
+
+### Pre-provisioned LocalStack Resources
+
+- **SQS Main Queue:** `logpulse-events` (Visibility Timeout: 30s, MaxReceiveCount: 3)
+- **SQS Dead Letter Queue:** `logpulse-events-dlq`
+- **S3 Bucket:** `logpulse-raw`
+- **SNS Topic:** `logpulse-alerts`
+
+---
+
 ## Contributing & Security Guidelines
 
 - **No Secrets in Repo:** Never commit credentials, `.env` files, `.tfstate`, or private keys.
