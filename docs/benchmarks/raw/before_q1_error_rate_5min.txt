@@ -1,0 +1,5 @@
+-> Sort: window_start  (actual time=356..356 rows=288 loops=1)
+    -> Table scan on <temporary>  (actual time=356..356 rows=288 loops=1)
+        -> Aggregate using temporary table  (actual time=356..356 rows=288 loops=1)
+            -> Filter: ((`events`.service = 'payment-service') and (`events`.ts >= TIMESTAMP'2026-10-02 00:00:00') and (`events`.ts < TIMESTAMP'2026-10-03 00:00:00'))  (cost=14488 rows=1561) (actual time=0.244..284 rows=28551 loops=1)
+                -> Table scan on events  (cost=14488 rows=140507) (actual time=0.239..254 rows=142253 loops=1)

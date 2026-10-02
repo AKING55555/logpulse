@@ -1,0 +1,2 @@
+-> Limit: 100 row(s)  (cost=1070 rows=100) (actual time=0.991..1.04 rows=100 loops=1)
+    -> Index range scan on events using idx_service_ts over (service = 'inventory-service' AND '2026-10-01 12:00:00.000' <= ts < '2026-10-01 14:00:00.000'), with index condition: ((`events`.service = 'inventory-service') and (`events`.ts >= TIMESTAMP'2026-10-01 12:00:00') and (`events`.ts < TIMESTAMP'2026-10-01 14:00:00'))  (cost=1070 rows=2340) (actual time=0.99..1.03 rows=100 loops=1)

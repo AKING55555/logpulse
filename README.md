@@ -157,6 +157,103 @@ make reset
 
 ---
 
+## Database
+
+LogPulse stores structured log events in a **MySQL 8** instance (local Docker on port 3307, production RDS).
+All database artefacts live in [`/db`](db/).
+
+### Schema — `logpulse.events`
+
+| Column | Type | Notes |
+|:-------|:-----|:------|
+| `id` | `BIGINT UNSIGNED AUTO_INCREMENT` | Surrogate key |
+| `trace_id` | `CHAR(36) NOT NULL` | UUID v4 from the event source |
+| `service` | `VARCHAR(64) NOT NULL` | Originating micro-service name |
+| `host` | `VARCHAR(64) NOT NULL` | Emitting host FQDN |
+| `level` | `ENUM('DEBUG','INFO','WARN','ERROR')` | Severity |
+| `ts` | `DATETIME(3) NOT NULL` | **Millisecond-precision event timestamp** |
+| `message` | `TEXT` | Human-readable log message |
+| `latency_ms` | `INT` | Request latency in milliseconds |
+| `endpoint` | `VARCHAR(128)` | HTTP endpoint path |
+
+**Keys:**
+- `PRIMARY KEY (id, ts)` — composite required by MySQL partitioning (every unique/PK key must include the partition column).
+- `UNIQUE KEY uq_trace (trace_id, ts)` — deduplication key. `ts` must be set by the **event source** (never `NOW()`); if the same event is retried with a server-generated timestamp it would receive a different `ts` and bypass deduplication.
+
+> **Why is `ts` in every unique key?**  
+> MySQL's `PARTITION BY RANGE` requires that every unique/primary key includes the partitioning expression column (`ts` here). This lets MySQL enforce uniqueness locally within a partition without a global cross-partition scan. The consequence is that idempotency of ingestion depends on `ts` being a stable, source-assigned value — **never** defaulted to `NOW()` or `CURRENT_TIMESTAMP`.
+
+### Partitioning
+
+The table is partitioned with `PARTITION BY RANGE (TO_DAYS(ts))`:
+
+- **14 explicit daily partitions** — covering the 7-day historical test window plus the next 7 days.
+- **`pmax VALUES LESS THAN MAXVALUE`** — catch-all for any future records.
+
+Partition pruning means time-bounded queries only touch the relevant day-partitions, reducing I/O dramatically on large datasets.
+
+**Adding the next day's partition** (run daily at ~00:05 UTC):
+
+```sql
+-- See /db/add_partitions.sql for the full annotated example.
+ALTER TABLE events REORGANIZE PARTITION pmax INTO (
+    PARTITION p20261012 VALUES LESS THAN (TO_DAYS('2026-10-13')),
+    PARTITION pmax VALUES LESS THAN MAXVALUE
+);
+```
+
+`ADD PARTITION` is not usable when a catch-all `pmax` exists; `REORGANIZE PARTITION` splits it instead. See [`/db/add_partitions.sql`](db/add_partitions.sql) for the full pattern including a stored-procedure example for dynamic scheduling.
+
+### Running the Data Loader
+
+Generates 1,000,000+ synthetic log events with reproducible random seed 42:
+
+```bash
+# Prerequisites: pip install pymysql
+# Container must be running: make up
+
+python db/generate_data.py          # default: 1,000,000 rows
+python db/generate_data.py --rows 500000  # custom row count
+```
+
+The loader uses batched multi-row `INSERT` statements (5,000 rows per transaction) and prints rows loaded, elapsed time, and rows/second. It is safety-guarded to only connect to `127.0.0.1:3307`.
+
+**Distribution characteristics:**
+- 5 services, 10 hosts, 4 endpoints per service
+- ~5% `ERROR`, ~15% `WARN`, ~60% `INFO`, ~20% `DEBUG`
+- Latency: lognormal distribution (long-tailed, median ≈ 36 ms)
+- Timestamps spread evenly across a 7-day window
+
+### Running the Index Benchmark
+
+```bash
+python db/benchmark.py
+```
+
+The benchmark:
+1. Confirms row count via `SELECT COUNT(*)`.
+2. Runs `EXPLAIN ANALYZE` + 3 timed executions for each of the 5 analytics queries (**BEFORE** state — no `idx_service_ts`).
+3. Creates `CREATE INDEX idx_service_ts ON events (service, ts)` and runs `ANALYZE TABLE`.
+4. Repeats measurements (**AFTER** state).
+5. Saves raw `EXPLAIN ANALYZE` output to [`/docs/benchmarks/raw/`](docs/benchmarks/raw/).
+6. Writes a summary table to [`/docs/benchmarks/index-benchmark.md`](docs/benchmarks/index-benchmark.md).
+
+### Analytics Queries
+
+See [`/db/analytics.sql`](db/analytics.sql) for:
+
+| Query | Description |
+|:------|:------------|
+| Q1 | Error rate per 5-minute window per service (last 24 h) |
+| Q2 | p95 latency per service using `ROW_NUMBER()` + `CEIL(0.95 * cnt)` |
+| Q3 | Top 10 slowest endpoints per service using `DENSE_RANK()` |
+| Q4 | Point lookup: service + 2-hour timestamp range |
+| Q5 | Filtered ERROR lookup: service + 1-day timestamp range |
+
+All queries filter on both `service` and `ts` so that the `idx_service_ts (service, ts)` index can be used after partition pruning.
+
+---
+
 ## Contributing & Security Guidelines
 
 - **No Secrets in Repo:** Never commit credentials, `.env` files, `.tfstate`, or private keys.
