@@ -113,3 +113,56 @@ WHERE service = 'notification-service'
   AND ts < '2026-10-02 00:00:00'
   AND level = 'ERROR'
 LIMIT 100;
+
+-- ------------------------------------------------------------------------------
+-- Query 6: Error Count per Hour for One Service over 7 Days
+-- ------------------------------------------------------------------------------
+-- Aggregates errors bucketed by 1-hour intervals across the full 7-day dataset.
+-- ------------------------------------------------------------------------------
+SELECT
+    service,
+    DATE_FORMAT(ts, '%Y-%m-%d %H:00:00') AS hour_bucket,
+    COUNT(*) AS error_count
+FROM events
+WHERE service = 'payment-service'
+  AND ts >= '2026-09-26 00:00:00'
+  AND ts < '2026-10-03 00:00:00'
+  AND level = 'ERROR'
+GROUP BY service, hour_bucket
+ORDER BY hour_bucket ASC;
+
+-- ------------------------------------------------------------------------------
+-- Query 7: All Events for One Service in a 1-Hour Window
+-- ------------------------------------------------------------------------------
+-- Retrieves all log event attributes for a single service in a focused 1-hour window.
+-- ------------------------------------------------------------------------------
+SELECT
+    id,
+    trace_id,
+    service,
+    host,
+    level,
+    ts,
+    latency_ms,
+    endpoint,
+    message
+FROM events
+WHERE service = 'payment-service'
+  AND ts >= '2026-10-02 14:00:00'
+  AND ts < '2026-10-02 15:00:00';
+
+-- ------------------------------------------------------------------------------
+-- Query 8: Alert Query — Error Rate for One Service over Last 5 Minutes
+-- ------------------------------------------------------------------------------
+-- Evaluates error rate percentage for payment-service across the trailing 5-minute
+-- window relative to the dataset ceiling (2026-10-02 23:59:59.925).
+-- ------------------------------------------------------------------------------
+SELECT
+    service,
+    COUNT(*) AS total_events,
+    SUM(CASE WHEN level = 'ERROR' THEN 1 ELSE 0 END) AS error_events,
+    ROUND(SUM(CASE WHEN level = 'ERROR' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS error_rate_pct
+FROM events
+WHERE service = 'payment-service'
+  AND ts >= '2026-10-02 23:55:00'
+GROUP BY service;

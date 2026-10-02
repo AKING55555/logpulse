@@ -1,0 +1,8 @@
+=== config_d - Q6: Error Count per Hour over 7 Days (payment-service) ===
+Table: events
+
+-> Sort: hour_bucket  (actual time=1427..1427 rows=168 loops=1)
+    -> Table scan on <temporary>  (actual time=1427..1427 rows=168 loops=1)
+        -> Aggregate using temporary table  (actual time=1427..1427 rows=168 loops=1)
+            -> Filter: ((`events`.service = 'payment-service') and (`events`.ts >= TIMESTAMP'2026-09-26 00:00:00') and (`events`.ts < TIMESTAMP'2026-10-03 00:00:00') and (`events`.`level` = 'ERROR'))  (cost=110844 rows=96445) (actual time=0.172..1402 rows=10036 loops=1)
+                -> Table scan on events  (cost=110844 rows=989365) (actual time=0.121..1185 rows=1e+6 loops=1)

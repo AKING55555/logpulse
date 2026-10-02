@@ -1,0 +1,6 @@
+=== config_c - Q5: Filtered ERROR Lookup: 1-Day Window (notification-service) ===
+Table: events_flat
+
+-> Limit: 100 row(s)  (cost=60972 rows=100) (actual time=43.9..62.9 rows=100 loops=1)
+    -> Filter: (events_flat.`level` = 'ERROR')  (cost=60972 rows=14274) (actual time=43.9..62.9 rows=100 loops=1)
+        -> Index range scan on events_flat using idx_service_ts over (service = 'notification-service' AND '2026-10-01 00:00:00.000' <= ts < '2026-10-02 00:00:00.000'), with index condition: ((events_flat.service = 'notification-service') and (events_flat.ts >= TIMESTAMP'2026-10-01 00:00:00') and (events_flat.ts < TIMESTAMP'2026-10-02 00:00:00'))  (cost=60972 rows=57096) (actual time=43.9..62.4 rows=2258 loops=1)

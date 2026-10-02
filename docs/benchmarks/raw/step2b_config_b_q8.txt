@@ -1,0 +1,6 @@
+=== config_b - Q8: Alert Query: 5-Min Error Rate (payment-service) ===
+Table: events
+
+-> Group aggregate: count(0), sum((case when (`events`.`level` = 'ERROR') then 1 else 0 end)), count(0), sum((case when (`events`.`level` = 'ERROR') then 1 else 0 end))  (cost=30792 rows=532) (actual time=289..289 rows=1 loops=1)
+    -> Filter: ((`events`.service = 'payment-service') and (`events`.ts >= TIMESTAMP'2026-10-02 23:55:00'))  (cost=29848 rows=9433) (actual time=209..288 rows=66 loops=1)
+        -> Table scan on events  (cost=29848 rows=283027) (actual time=0.165..232 rows=285539 loops=1)

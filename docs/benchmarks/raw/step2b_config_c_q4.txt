@@ -1,0 +1,5 @@
+=== config_c - Q4: Point Lookup: 2h Window (inventory-service) ===
+Table: events_flat
+
+-> Limit: 100 row(s)  (cost=2769 rows=100) (actual time=2.26..2.29 rows=100 loops=1)
+    -> Index range scan on events_flat using idx_service_ts over (service = 'inventory-service' AND '2026-10-01 12:00:00.000' <= ts < '2026-10-01 14:00:00.000'), with index condition: ((events_flat.service = 'inventory-service') and (events_flat.ts >= TIMESTAMP'2026-10-01 12:00:00') and (events_flat.ts < TIMESTAMP'2026-10-01 14:00:00'))  (cost=2769 rows=2340) (actual time=2.25..2.28 rows=100 loops=1)

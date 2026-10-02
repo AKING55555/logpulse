@@ -1,0 +1,5 @@
+=== config_a - Q7: All Events in 1-Hour Window (payment-service) ===
+Table: events_flat
+
+-> Filter: ((events_flat.service = 'payment-service') and (events_flat.ts >= TIMESTAMP'2026-10-02 14:00:00') and (events_flat.ts < TIMESTAMP'2026-10-02 15:00:00'))  (cost=112248 rows=10327) (actual time=2.59..1443 rows=1165 loops=1)
+    -> Table scan on events_flat  (cost=112248 rows=929628) (actual time=0.0247..1253 rows=1e+6 loops=1)

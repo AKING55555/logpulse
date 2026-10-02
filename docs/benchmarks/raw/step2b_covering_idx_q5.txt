@@ -1,0 +1,5 @@
+=== covering_idx - Q5: Filtered ERROR Lookup: 1-Day Window (notification-service) ===
+Table: events
+
+-> Limit: 100 row(s)  (cost=678 rows=100) (actual time=0.0557..1.45 rows=100 loops=1)
+    -> Index range scan on events using idx_service_level_ts over (service = 'notification-service' AND level = 'ERROR' AND '2026-10-01 00:00:00.000' <= ts < '2026-10-02 00:00:00.000'), with index condition: ((`events`.service = 'notification-service') and (`events`.ts >= TIMESTAMP'2026-10-01 00:00:00') and (`events`.ts < TIMESTAMP'2026-10-02 00:00:00') and (`events`.`level` = 'ERROR'))  (cost=678 rows=1482) (actual time=0.0543..1.43 rows=100 loops=1)

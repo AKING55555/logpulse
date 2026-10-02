@@ -1,0 +1,5 @@
+=== config_d - Q8: Alert Query: 5-Min Error Rate (payment-service) ===
+Table: events
+
+-> Group aggregate: count(0), sum((case when (`events`.`level` = 'ERROR') then 1 else 0 end)), count(0), sum((case when (`events`.`level` = 'ERROR') then 1 else 0 end))  (cost=50.2 rows=7.96) (actual time=0.484..0.484 rows=1 loops=1)
+    -> Index range scan on events using idx_service_ts over (service = 'payment-service' AND '2026-10-02 23:55:00.000' <= ts), with index condition: ((`events`.service = 'payment-service') and (`events`.ts >= TIMESTAMP'2026-10-02 23:55:00'))  (cost=43.6 rows=66) (actual time=0.0994..0.454 rows=66 loops=1)

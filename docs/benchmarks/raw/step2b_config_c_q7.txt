@@ -1,0 +1,4 @@
+=== config_c - Q7: All Events in 1-Hour Window (payment-service) ===
+Table: events_flat
+
+-> Index range scan on events_flat using idx_service_ts over (service = 'payment-service' AND '2026-10-02 14:00:00.000' <= ts < '2026-10-02 15:00:00.000'), with index condition: ((events_flat.service = 'payment-service') and (events_flat.ts >= TIMESTAMP'2026-10-02 14:00:00') and (events_flat.ts < TIMESTAMP'2026-10-02 15:00:00'))  (cost=1190 rows=1165) (actual time=0.121..15.1 rows=1165 loops=1)

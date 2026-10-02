@@ -1,0 +1,6 @@
+=== config_b - Q5: Filtered ERROR Lookup: 1-Day Window (notification-service) ===
+Table: events
+
+-> Limit: 100 row(s)  (cost=14530 rows=100) (actual time=0.0265..20.6 rows=100 loops=1)
+    -> Filter: ((`events`.service = 'notification-service') and (`events`.ts >= TIMESTAMP'2026-10-01 00:00:00') and (`events`.ts < TIMESTAMP'2026-10-02 00:00:00') and (`events`.`level` = 'ERROR'))  (cost=14530 rows=391) (actual time=0.0259..20.5 rows=100 loops=1)
+        -> Table scan on events  (cost=14530 rows=140930) (actual time=0.0217..17.6 rows=11055 loops=1)

@@ -1,0 +1,6 @@
+=== config_b - Q4: Point Lookup: 2h Window (inventory-service) ===
+Table: events
+
+-> Limit: 100 row(s)  (cost=14530 rows=100) (actual time=0.15..8.51 rows=100 loops=1)
+    -> Filter: ((`events`.service = 'inventory-service') and (`events`.ts >= TIMESTAMP'2026-10-01 12:00:00') and (`events`.ts < TIMESTAMP'2026-10-01 14:00:00'))  (cost=14530 rows=1566) (actual time=0.149..8.49 rows=100 loops=1)
+        -> Table scan on events  (cost=14530 rows=140930) (actual time=0.132..7.08 rows=6081 loops=1)
